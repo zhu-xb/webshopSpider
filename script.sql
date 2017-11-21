@@ -12,3 +12,109 @@ CREATE TABLE [dbo].[products](
 ) ON [PRIMARY]
 
 GO
+/*
+* 根据促销信息计算出折扣幅度
+*/
+create FUNCTION [dbo].[ufn_getPromotion]
+(	@productPromotion nvarchar(2000)
+)
+RETURNS decimal(4,2) 
+AS
+begin
+	declare @tempPromotion  nvarchar(2000)
+	set @tempPromotion = @productPromotion
+	
+	--折扣幅度
+	declare @zk decimal(4,2) 
+	declare @zk1 decimal(4,2) 
+	declare @zk2 decimal(4,2) 
+	declare @zk3 decimal(4,2) 
+	set @zk=1
+	set @zk1=1
+	set @zk2=1
+	set @zk3=1	
+	
+	declare @temp1  nvarchar(200)
+	declare @temp2  nvarchar(200)
+	
+	if @tempPromotion like '%每满%元，可减%元现金%'
+	begin
+		 set @temp1 =substring(@tempPromotion,charindex('每满',@tempPromotion)+2,6)
+		 set @temp1 = substring(@temp1,1,charindex('元',@temp1)-1)
+		 set @temp2 =substring(@tempPromotion,charindex('可减',@tempPromotion)+2,6)
+		 set @temp2 = substring(@temp2,1,charindex('元',@temp2)-1)
+		 set @zk1 = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2)
+		 
+		 set @tempPromotion=replace(@tempPromotion,'每满'+@temp1+'元，可减'+@temp2+'元现金','')
+	end
+	
+	if @tempPromotion like '%总价打%折%'
+	begin
+		 set @temp1 =substring(@tempPromotion,charindex('总价打',@tempPromotion)+3,5)
+		 set @temp1 = substring(@temp1,1,charindex('折',@temp1)-1)
+		 set @zk2 = convert(decimal(4,2) ,@temp1)
+		 set @tempPromotion=replace(@tempPromotion,'总价打'+@temp1+'折','')
+	end
+		
+	if @tempPromotion like '%满%元减%元%'
+	begin	
+		 set @temp1 =substring(@tempPromotion,charindex('满',@tempPromotion)+1,6)
+		 set @temp1 = substring(@temp1,1,charindex('元',@temp1)-1)
+		 set @temp2 =substring(@tempPromotion,charindex('减',@tempPromotion)+1,6)
+		 set @temp2 = substring(@temp2,1,charindex('元',@temp2)-1)
+		 set @zk3 = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2) 
+		 set @tempPromotion=replace(@tempPromotion,'满'+@temp1+'元减'+@temp2+'元','')
+	end
+	
+	set @zk=@zk1
+	if @zk > @zk2
+	begin
+		set @zk=@zk2
+	end
+	if @zk > @zk3
+	begin
+		set @zk=@zk3
+	end
+	
+	return @zk
+end
+
+
+create view [dbo].[v_products]
+as
+	SELECT [ID]
+      ,[productId]
+      ,[productName]
+      ,[productPrice]
+      ,[productPromotion]
+      ,[dbo].[ufn_getPromotion] ([productPromotion]) as 'zkfd'
+      ,[dbo].[ufn_getPromotion] ([productPromotion]) * convert(decimal(10,4),productPrice) as 'zkPrice'
+      ,[productDate]
+  FROM [dbo].[products]
+
+GO
+
+
+CREATE view [dbo].[v_productHisPrice]
+as 
+	select a.productid as '商品编号'
+		,a.productName as '商品名称'
+		,isnull(convert(decimal(10,2),b.yestodayPrice),0) as '昨日价格'
+		,isnull(convert(decimal(10,2),a.todayPrice),0) as '今日价格'
+		,isnull(convert(decimal(10,2),c.minPrice),0) as '历史最低价格'
+		,isnull(c.productdate,'') as '最低价格时间'
+	from 
+		(select productid,productName,min(zkprice) as 'todayPrice' from v_products
+		where productdate between convert(varchar(10),getdate(),120) and convert(varchar(10),dateadd(day,1,getdate()),120)
+		group by productid,productName) a
+	left join 
+		(select productid,min(zkprice) as 'yestodayPrice' from v_products
+		where productdate between convert(varchar(10),dateadd(day,-1,getdate()),120) and convert(varchar(10),getdate(),120)
+		group by productid) b on a.productid=b.productid
+	left join 
+		(select productid,min(zkprice) as 'minPrice',max(convert(varchar(10),productdate,120)) as 'productdate' from v_products
+		group by productid) c on a.productid=c.productid
+
+GO
+
+
