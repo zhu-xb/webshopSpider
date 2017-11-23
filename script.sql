@@ -1,8 +1,10 @@
-ï»¿CREATE TABLE [dbo].[products](
+
+CREATE TABLE [dbo].[jd_products](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[productId] [varchar](50) NULL,
 	[productName] [nvarchar](500) NULL,
 	[productPrice] [varchar](50) NULL,
+	[productPromotionPrice] [decimal](10, 2) NULL,
 	[productPromotion] [nvarchar](2000) NULL,
 	[productDate] [datetime] NULL,
  CONSTRAINT [PK_products] PRIMARY KEY CLUSTERED 
@@ -12,19 +14,31 @@
 ) ON [PRIMARY]
 
 GO
-/*
-* æ ¹æ®ä¿ƒé”€ä¿¡æ¯è®¡ç®—å‡ºæŠ˜æ‰£å¹…åº¦
+
+
+/**
+*¸ù¾İ´ÙÏúĞÅÏ¢ºÍµ±Ç°ÏúÊÛ¼Û¸ñ¼ÆËã³ö´ÙÏú¼Û
 */
-create FUNCTION [dbo].[ufn_getPromotion]
-(	@productPromotion nvarchar(2000)
+CREATE FUNCTION [dbo].[ufn_jd_calcPromotionPrice]
+(
+@productPromotion nvarchar(2000),
+@productPrice varchar(50)
 )
-RETURNS decimal(4,2) 
+RETURNS decimal(10,2) 
 AS
 begin
 	declare @tempPromotion  nvarchar(2000)
 	set @tempPromotion = @productPromotion
+
+	declare @PromotionPrice decimal(10,2)
+	if ISNUMERIC(@productPrice)=0
+	begin
+		set @PromotionPrice = 0
+		return @PromotionPrice
+	end
+	set @PromotionPrice=convert(decimal(10,2),@productPrice)
 	
-	--æŠ˜æ‰£å¹…åº¦
+	--ÕÛ¿Û·ù¶È
 	declare @zk decimal(4,2) 
 	declare @zktemp decimal(4,2)
 	set @zk=1
@@ -33,40 +47,41 @@ begin
 	declare @temp1  nvarchar(200)
 	declare @temp2  nvarchar(200)
 	
-	declare @isnext char(1)
-	set @isnext='Y'
+	declare @index int
+	set @index=0
 
-	while @isnext='Y'
+	while @index<10--ÎªÁË±ÜÃâ³öÏÖËÀÑ­»·£¬ÏŞÖÆ¼ìË÷´ÎÊı
 	begin
-		if @tempPromotion like '%æ¯æ»¡%å…ƒï¼Œå¯å‡%å…ƒç°é‡‘%'
+		set @index=@index+1
+		if @tempPromotion like '%Ã¿Âú%Ôª£¬¿É¼õ%ÔªÏÖ½ğ%'
 		begin
-			 set @temp1 =substring(@tempPromotion,charindex('æ¯æ»¡',@tempPromotion)+2,6)
-			 set @temp1 = substring(@temp1,1,charindex('å…ƒ',@temp1)-1)
-			 set @temp2 =substring(@tempPromotion,charindex('å¯å‡',@tempPromotion)+2,6)
-			 set @temp2 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
+			 set @temp2 =substring(@tempPromotion,charindex('Ã¿Âú',@tempPromotion)+2,50)
+			 set @temp1 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
+			 set @temp2 =substring(@temp2,charindex('¿É¼õ',@temp2)+2,6)
+			 set @temp2 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
 			 set @zktemp = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2)
 		 
-			 set @tempPromotion=replace(@tempPromotion,'æ¯æ»¡'+@temp1+'å…ƒï¼Œå¯å‡'+@temp2+'å…ƒç°é‡‘','')
+			 set @tempPromotion=replace(@tempPromotion,'Ã¿Âú'+@temp1+'Ôª£¬¿É¼õ'+@temp2+'ÔªÏÖ½ğ','')
 		end
-		else if @tempPromotion like '%æ€»ä»·æ‰“%æŠ˜%'
+		else if @tempPromotion like '%×Ü¼Û´ò%ÕÛ%'
 		begin
-			 set @temp1 =substring(@tempPromotion,charindex('æ€»ä»·æ‰“',@tempPromotion)+3,5)
-			 set @temp1 = substring(@temp1,1,charindex('æŠ˜',@temp1)-1)
+			 set @temp1 =substring(@tempPromotion,charindex('×Ü¼Û´ò',@tempPromotion)+3,5)
+			 set @temp1 = substring(@temp1,1,charindex('ÕÛ',@temp1)-1)
 			 set @zktemp = convert(decimal(4,2) ,@temp1)*0.1
-			 set @tempPromotion=replace(@tempPromotion,'æ€»ä»·æ‰“'+@temp1+'æŠ˜','')
+			 set @tempPromotion=replace(@tempPromotion,'×Ü¼Û´ò'+@temp1+'ÕÛ','')
 		end
-		else if @tempPromotion like '%æ»¡%å…ƒå‡%å…ƒ%'
+		else if @tempPromotion like '%Âú%Ôª¼õ%Ôª%'
 		begin	
-			 set @temp1 =substring(@tempPromotion,charindex('æ»¡',@tempPromotion)+1,6)
-			 set @temp1 = substring(@temp1,1,charindex('å…ƒ',@temp1)-1)
-			 set @temp2 =substring(@tempPromotion,charindex('å‡',@tempPromotion)+1,6)
-			 set @temp2 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
+			 set @temp2 =substring(@tempPromotion,charindex('Âú',@tempPromotion)+1,50)
+			 set @temp1 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
+			 set @temp2 =substring(@temp2,charindex('¼õ',@temp2)+1,6)
+			 set @temp2 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
 			 set @zktemp = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2) 
-			 set @tempPromotion=replace(@tempPromotion,'æ»¡'+@temp1+'å…ƒå‡'+@temp2+'å…ƒ','')
+			 set @tempPromotion=replace(@tempPromotion,'Âú'+@temp1+'Ôª¼õ'+@temp2+'Ôª','')
 		end
 		else
 		begin
-			set @isnext='N'
+			set @index=20
 		end
 
 		if @zk > @zktemp
@@ -75,46 +90,55 @@ begin
 		end
 	end
 
-	return @zk
+	return convert(decimal(10,2),round(@zk*@PromotionPrice,2))
 end
-
-
-
-
-create view [dbo].[v_products]
-as
-	SELECT [ID]
-      ,[productId]
-      ,[productName]
-      ,[productPrice]
-      ,[productPromotion]
-      ,[dbo].[ufn_getPromotion] ([productPromotion]) as 'zkfd'
-      ,[dbo].[ufn_getPromotion] ([productPromotion]) * convert(decimal(10,4),productPrice) as 'zkPrice'
-      ,[productDate]
-  FROM [dbo].[products]
 
 GO
 
 
-CREATE view [dbo].[v_productHisPrice]
+
+/**
+*ÉÌÆ·ÀúÊ·×îµÍ¼Û¸ñºÍ×î½üÈÕÆÚ
+*/
+CREATE view [dbo].[v_jd_productMinPrice]
 as 
-	select a.productid as 'å•†å“ç¼–å·'
-		,a.productName as 'å•†å“åç§°'
-		,isnull(convert(decimal(10,2),b.yestodayPrice),0) as 'æ˜¨æ—¥ä»·æ ¼'
-		,isnull(convert(decimal(10,2),a.todayPrice),0) as 'ä»Šæ—¥ä»·æ ¼'
-		,isnull(convert(decimal(10,2),c.minPrice),0) as 'å†å²æœ€ä½ä»·æ ¼'
-		,isnull(c.productdate,'') as 'æœ€ä½ä»·æ ¼æ—¶é—´'
-	from 
-		(select productid,productName,min(zkprice) as 'todayPrice' from v_products
-		where productdate between convert(varchar(10),getdate(),120) and convert(varchar(10),dateadd(day,1,getdate()),120)
-		group by productid,productName) a
-	left join 
-		(select productid,min(zkprice) as 'yestodayPrice' from v_products
-		where productdate between convert(varchar(10),dateadd(day,-1,getdate()),120) and convert(varchar(10),getdate(),120)
-		group by productid) b on a.productid=b.productid
-	left join 
-		(select productid,min(zkprice) as 'minPrice',max(convert(varchar(10),productdate,120)) as 'productdate' from v_products
-		group by productid) c on a.productid=c.productid
+	select a.productid,b.productName,a.productPromotionPrice,max(productdate) as 'productdate'
+	from (select productid,min([productPromotionPrice]) as 'productPromotionPrice'
+			from [jd_products]
+			group by productid) a
+	inner join [jd_products] b on a.productid=b.productid and a.[productPromotionPrice]=b.[productPromotionPrice]
+	group by a.productid,b.productName,a.productPromotionPrice
+
+
+
+GO
+
+/**
+*ÉÌÆ·×òÈÕ¼Û¸ñ/×î½ü¼Û¸ñºÍ×îµÍ¼Û¸ñ¶Ô±È
+*/
+
+CREATE view [dbo].[v_jd_productHisPrice]
+as 	
+	select a.productid as 'ÉÌÆ·±àºÅ'
+		,a.productName as 'ÉÌÆ·Ãû³Æ'
+		,isnull(convert(decimal(10,2),b.[productPromotionPrice]),0) as '×òÈÕ¼Û¸ñ'
+		,isnull(convert(decimal(10,2),a.[productPromotionPrice]),0) as '×îĞÂ¼Û¸ñ'
+		,isnull(convert(decimal(10,2),c.[productPromotionPrice]),0) as 'ÀúÊ·×îµÍ¼Û¸ñ'
+		,isnull(c.productdate,'') as '×îµÍ¼Û¸ñÊ±¼ä'
+	from [jd_products] a 
+	inner join (select productid,max(ID) as 'ID'
+				from [jd_products] 
+				group by productid) m 
+					on a.ID=m.ID
+
+	left join (select productid,min([productPromotionPrice]) as 'productPromotionPrice',max(productdate) as 'productdate'
+				from[jd_products]
+				where productdate between convert(varchar(10),dateadd(day,-1,getdate()),120) and convert(varchar(10),getdate(),120)
+				group by productid) b 
+					on a.productid=b.productid
+
+	left join  [v_jd_productMinPrice] c on a.productid=c.productid
+
 
 GO
 
