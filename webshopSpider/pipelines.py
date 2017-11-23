@@ -24,12 +24,13 @@ class webshopSpiderPipeline(object):
         self.cur = self.conn.cursor()
     def process_item(self, item, spider):
         productId = item['productId']
-        productName = item['productName']
+        productName = item['productName'].replace("'","''")
         productPrice = item['productPrice']
-        productPromotion = item['productPromotion']
+        productPromotion = item['productPromotion'].replace("'","''")
         productDate = item['productDate']
-        sql = "insert into Products values ('"+productId+"','"+productName.replace("'","''")+"','"+productPrice\
-              +"','"+productPromotion.replace("'","''")+"','"+productDate+"')"
+        sql = "insert into jd_products select '"+productId+"','"+productName+"','"+productPrice\
+              +"',[dbo].[ufn_jd_calcPromotionPrice]('"+productPromotion+"','"+productPrice+"'),'"\
+              +productPromotion+"','"+productDate+"'"
         #print(sql)
         self.cur.execute(sql)
         self.conn.commit()
