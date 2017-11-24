@@ -17,7 +17,7 @@ GO
 
 
 /**
-*¸ù¾İ´ÙÏúĞÅÏ¢ºÍµ±Ç°ÏúÊÛ¼Û¸ñ¼ÆËã³ö´ÙÏú¼Û
+*æ ¹æ®ä¿ƒé”€ä¿¡æ¯å’Œå½“å‰é”€å”®ä»·æ ¼è®¡ç®—å‡ºä¿ƒé”€ä»·
 */
 CREATE FUNCTION [dbo].[ufn_jd_calcPromotionPrice]
 (
@@ -38,7 +38,7 @@ begin
 	end
 	set @PromotionPrice=convert(decimal(10,2),@productPrice)
 	
-	--ÕÛ¿Û·ù¶È
+	--æŠ˜æ‰£å¹…åº¦
 	declare @zk decimal(4,2) 
 	declare @zktemp decimal(4,2)
 	set @zk=1
@@ -50,34 +50,34 @@ begin
 	declare @index int
 	set @index=0
 
-	while @index<10--ÎªÁË±ÜÃâ³öÏÖËÀÑ­»·£¬ÏŞÖÆ¼ìË÷´ÎÊı
+	while @index<10--ä¸ºäº†é¿å…å‡ºç°æ­»å¾ªç¯ï¼Œé™åˆ¶æ£€ç´¢æ¬¡æ•°
 	begin
 		set @index=@index+1
-		if @tempPromotion like '%Ã¿Âú%Ôª£¬¿É¼õ%ÔªÏÖ½ğ%'
+		if @tempPromotion like '%æ¯æ»¡%å…ƒï¼Œå¯å‡%å…ƒç°é‡‘%'
 		begin
-			 set @temp2 =substring(@tempPromotion,charindex('Ã¿Âú',@tempPromotion)+2,50)
-			 set @temp1 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
-			 set @temp2 =substring(@temp2,charindex('¿É¼õ',@temp2)+2,6)
-			 set @temp2 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
+			 set @temp2 =substring(@tempPromotion,charindex('æ¯æ»¡',@tempPromotion)+2,50)
+			 set @temp1 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
+			 set @temp2 =substring(@temp2,charindex('å¯å‡',@temp2)+2,6)
+			 set @temp2 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
 			 set @zktemp = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2)
 		 
-			 set @tempPromotion=replace(@tempPromotion,'Ã¿Âú'+@temp1+'Ôª£¬¿É¼õ'+@temp2+'ÔªÏÖ½ğ','')
+			 set @tempPromotion=replace(@tempPromotion,'æ¯æ»¡'+@temp1+'å…ƒï¼Œå¯å‡'+@temp2+'å…ƒç°é‡‘','')
 		end
-		else if @tempPromotion like '%×Ü¼Û´ò%ÕÛ%'
+		else if @tempPromotion like '%æ€»ä»·æ‰“%æŠ˜%'
 		begin
-			 set @temp1 =substring(@tempPromotion,charindex('×Ü¼Û´ò',@tempPromotion)+3,5)
-			 set @temp1 = substring(@temp1,1,charindex('ÕÛ',@temp1)-1)
+			 set @temp1 =substring(@tempPromotion,charindex('æ€»ä»·æ‰“',@tempPromotion)+3,5)
+			 set @temp1 = substring(@temp1,1,charindex('æŠ˜',@temp1)-1)
 			 set @zktemp = convert(decimal(4,2) ,@temp1)*0.1
-			 set @tempPromotion=replace(@tempPromotion,'×Ü¼Û´ò'+@temp1+'ÕÛ','')
+			 set @tempPromotion=replace(@tempPromotion,'æ€»ä»·æ‰“'+@temp1+'æŠ˜','')
 		end
-		else if @tempPromotion like '%Âú%Ôª¼õ%Ôª%'
+		else if @tempPromotion like '%æ»¡%å…ƒå‡%å…ƒ%'
 		begin	
-			 set @temp2 =substring(@tempPromotion,charindex('Âú',@tempPromotion)+1,50)
-			 set @temp1 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
-			 set @temp2 =substring(@temp2,charindex('¼õ',@temp2)+1,6)
-			 set @temp2 = substring(@temp2,1,charindex('Ôª',@temp2)-1)
+			 set @temp2 =substring(@tempPromotion,charindex('æ»¡',@tempPromotion)+1,50)
+			 set @temp1 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
+			 set @temp2 =substring(@temp2,charindex('å‡',@temp2)+1,6)
+			 set @temp2 = substring(@temp2,1,charindex('å…ƒ',@temp2)-1)
 			 set @zktemp = round((convert(decimal(10,4) ,@temp1) - convert(decimal(10,4) ,@temp2))/convert(decimal(10,4) ,@temp1),2) 
-			 set @tempPromotion=replace(@tempPromotion,'Âú'+@temp1+'Ôª¼õ'+@temp2+'Ôª','')
+			 set @tempPromotion=replace(@tempPromotion,'æ»¡'+@temp1+'å…ƒå‡'+@temp2+'å…ƒ','')
 		end
 		else
 		begin
@@ -98,33 +98,33 @@ GO
 
 
 /**
-*ÉÌÆ·ÀúÊ·×îµÍ¼Û¸ñºÍ×î½üÈÕÆÚ
+*å•†å“å†å²æœ€ä½ä»·æ ¼å’Œæœ€è¿‘æ—¥æœŸ
 */
 CREATE view [dbo].[v_jd_productMinPrice]
 as 
-	select a.productid,b.productName,a.productPromotionPrice,max(productdate) as 'productdate'
+	select a.productid,a.productPromotionPrice,max(productdate) as 'productdate'
 	from (select productid,min([productPromotionPrice]) as 'productPromotionPrice'
 			from [jd_products]
 			group by productid) a
 	inner join [jd_products] b on a.productid=b.productid and a.[productPromotionPrice]=b.[productPromotionPrice]
-	group by a.productid,b.productName,a.productPromotionPrice
+	group by a.productid,a.productPromotionPrice
 
 
 
 GO
 
 /**
-*ÉÌÆ·×òÈÕ¼Û¸ñ/×î½ü¼Û¸ñºÍ×îµÍ¼Û¸ñ¶Ô±È
+*å•†å“æ˜¨æ—¥ä»·æ ¼/æœ€è¿‘ä»·æ ¼å’Œæœ€ä½ä»·æ ¼å¯¹æ¯”
 */
 
 CREATE view [dbo].[v_jd_productHisPrice]
 as 	
-	select a.productid as 'ÉÌÆ·±àºÅ'
-		,a.productName as 'ÉÌÆ·Ãû³Æ'
-		,isnull(convert(decimal(10,2),b.[productPromotionPrice]),0) as '×òÈÕ¼Û¸ñ'
-		,isnull(convert(decimal(10,2),a.[productPromotionPrice]),0) as '×îĞÂ¼Û¸ñ'
-		,isnull(convert(decimal(10,2),c.[productPromotionPrice]),0) as 'ÀúÊ·×îµÍ¼Û¸ñ'
-		,isnull(c.productdate,'') as '×îµÍ¼Û¸ñÊ±¼ä'
+	select a.productid as 'å•†å“ç¼–å·'
+		,a.productName as 'å•†å“åç§°'
+		,isnull(convert(decimal(10,2),b.[productPromotionPrice]),0) as 'æ˜¨æ—¥ä»·æ ¼'
+		,isnull(convert(decimal(10,2),a.[productPromotionPrice]),0) as 'æœ€æ–°ä»·æ ¼'
+		,isnull(convert(decimal(10,2),c.[productPromotionPrice]),0) as 'å†å²æœ€ä½ä»·æ ¼'
+		,isnull(c.productdate,'') as 'æœ€ä½ä»·æ ¼æ—¶é—´'
 	from [jd_products] a 
 	inner join (select productid,max(ID) as 'ID'
 				from [jd_products] 
