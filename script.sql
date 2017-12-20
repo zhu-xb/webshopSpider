@@ -16,3 +16,4 @@ CREATE view [dbo].[v_jd_productHisPrice]as   select a.productid as '商品编�
  left join (select productid,min([productPromotionPrice]) as 'productPromotionPrice',max(productdate) as 'productdate'    from[jd_products]    where productdate between convert(varchar(10),dateadd(day,-1,getdate()),120) and convert(varchar(10),getdate(),120)    group by productid) b      on a.productid=b.productid
  left join  [v_jd_productMinPrice] c on a.productid=c.productid
 GO
+
